@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      signups: {
+        Row: {
+          address: string
+          colour: string | null
+          created_at: string
+          email: string
+          flower: string | null
+          hindi_comfort: string | null
+          id: string
+          instagram: string | null
+          language: string | null
+          likes: string | null
+          listening: string | null
+          name: string
+          phone: string
+          song: string | null
+        }
+        Insert: {
+          address: string
+          colour?: string | null
+          created_at?: string
+          email: string
+          flower?: string | null
+          hindi_comfort?: string | null
+          id?: string
+          instagram?: string | null
+          language?: string | null
+          likes?: string | null
+          listening?: string | null
+          name: string
+          phone: string
+          song?: string | null
+        }
+        Update: {
+          address?: string
+          colour?: string | null
+          created_at?: string
+          email?: string
+          flower?: string | null
+          hindi_comfort?: string | null
+          id?: string
+          instagram?: string | null
+          language?: string | null
+          likes?: string | null
+          listening?: string | null
+          name?: string
+          phone?: string
+          song?: string | null
+        }
+        Relationships: []
+      }
+      visits: {
+        Row: {
+          id: string
+          visited_at: string
+        }
+        Insert: {
+          id?: string
+          visited_at?: string
+        }
+        Update: {
+          id?: string
+          visited_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

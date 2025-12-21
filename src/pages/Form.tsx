@@ -5,6 +5,8 @@ import { FormInput, FormTextArea } from '@/components/FormInput';
 import { FormButton } from '@/components/FormButton';
 import { RadioOption } from '@/components/RadioOption';
 import { useToast } from '@/hooks/use-toast';
+import Header from '@/components/Header';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FormData {
   name: string;
@@ -91,12 +93,31 @@ const Form = () => {
 
   const nextStep = () => setStep(prev => prev + 1);
 
-  const handleSubmit = () => {
-    // Store in localStorage for now (will be replaced with Supabase)
-    const submissions = JSON.parse(localStorage.getItem('letterSignups') || '[]');
-    submissions.push({ ...formData, submittedAt: new Date().toISOString() });
-    localStorage.setItem('letterSignups', JSON.stringify(submissions));
-    nextStep();
+  const handleSubmit = async () => {
+    try {
+      const { error } = await supabase.from('signups').insert({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        instagram: formData.instagram || null,
+        address: formData.address,
+        likes: formData.likes || null,
+        listening: formData.listening || null,
+        flower: formData.flower || null,
+        colour: formData.colour || null,
+        song: formData.song || null,
+        language: formData.language || null,
+        hindi_comfort: formData.hindiUnderstanding || null,
+      });
+
+      if (error) throw error;
+      nextStep();
+    } catch (error) {
+      toast({
+        description: "something went wrong. please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const screens = [
@@ -291,6 +312,7 @@ const Form = () => {
 
   return (
     <div className="h-full overflow-hidden">
+      <Header />
       <AnimatePresence mode="wait">
         {screens[step]}
       </AnimatePresence>
