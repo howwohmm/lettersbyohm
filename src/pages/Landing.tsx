@@ -1,8 +1,16 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { FormButton } from '@/components/FormButton';
+import Header from '@/components/Header';
+import { supabase } from '@/integrations/supabase/client';
 
 const Landing = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Track visit
+    supabase.from('visits').insert({}).then(() => {});
+  }, []);
 
   const handleStart = () => {
     navigate('/form');
@@ -10,7 +18,8 @@ const Landing = () => {
 
   return (
     <div className="screen overflow-y-auto">
-      <div className="flex-1 flex flex-col justify-center py-8">
+      <Header />
+      <div className="flex-1 flex flex-col justify-center py-8 pt-16">
         <div className="space-y-8 breathable text-sm leading-relaxed">
           <p>
             hi, i'm ohm.<br />
