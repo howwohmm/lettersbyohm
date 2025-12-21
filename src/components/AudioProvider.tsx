@@ -25,7 +25,7 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 
   useEffect(() => {
     // Create audio element
-    const audio = new Audio('https://cdn.pixabay.com/download/audio/2022/02/22/audio_d1718ab41b.mp3?filename=please-calm-my-mind-125566.mp3');
+    const audio = new Audio('/audio/background.mp3');
     audio.loop = true;
     audio.volume = 0.08;
     audioRef.current = audio;
