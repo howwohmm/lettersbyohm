@@ -114,7 +114,7 @@ const Form = () => {
       <FormInput
         ref={inputRefs.email}
         type="email"
-        placeholder="only for letter updates"
+        placeholder="your best email (only for letter updates)"
         value={formData.email}
         onChange={e => updateField('email', e.target.value)}
         onKeyDown={e => handleKeyDown(e, () => inputRefs.phone.current?.focus())}
@@ -122,13 +122,13 @@ const Form = () => {
       <FormInput
         ref={inputRefs.phone}
         type="tel"
-        placeholder="in case the letter needs help"
+        placeholder="your phone number (in case the letter needs help searching you)"
         value={formData.phone}
         onChange={e => updateField('phone', e.target.value)}
         onKeyDown={e => handleKeyDown(e, () => {})}
       />
       <FormInput
-        placeholder="so i know who you are (optional)"
+        placeholder="your instagram (lmao why does this form feels weird haha)"
         value={formData.instagram}
         onChange={e => updateField('instagram', e.target.value)}
         onKeyDown={e => handleKeyDown(e, () => validateStep0() && nextStep())}
@@ -277,6 +277,14 @@ const Form = () => {
           noted.<br />
           i'll take it from here.
         </p>
+      </div>
+      
+      <div className="mt-12">
+        <FormButton 
+          onClick={() => window.open('https://instagram.com/teendandiyan', '_blank')}
+        >
+          tell me you signed up ;0
+        </FormButton>
       </div>
     </FormScreen>,
   ];
