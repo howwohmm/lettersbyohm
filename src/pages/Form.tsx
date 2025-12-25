@@ -7,6 +7,14 @@ import { RadioOption } from '@/components/RadioOption';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import { supabase } from '@/integrations/supabase/client';
+import { z } from 'zod';
+import { 
+  signupSchema, 
+  checkRateLimit, 
+  recordSubmission, 
+  hasAlreadySubmitted, 
+  markAsSubmitted 
+} from '@/lib/validation';
 
 interface FormData {
   name: string;
@@ -27,7 +35,8 @@ const LANGUAGE_OPTIONS = ['english', 'hindi', 'both', 'something else'] as const
 const HINDI_UNDERSTANDING_OPTIONS = ['yes', 'a little', 'no'] as const;
 
 const Form = () => {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => hasAlreadySubmitted() ? -1 : 0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -71,59 +80,122 @@ const Form = () => {
   }, []);
 
   const validateStep0 = useCallback(() => {
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
-      toast({
-        description: "please fill in the required fields",
-        variant: "destructive",
+    try {
+      // Validate basic fields for step 0
+      const basicSchema = signupSchema.pick({ name: true, email: true, phone: true, instagram: true });
+      basicSchema.parse({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        instagram: formData.instagram,
       });
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          description: error.errors[0].message.toLowerCase(),
+          variant: "destructive",
+        });
+      }
       return false;
     }
-    return true;
-  }, [formData.name, formData.email, formData.phone, toast]);
+  }, [formData.name, formData.email, formData.phone, formData.instagram, toast]);
 
   const validateStep1 = useCallback(() => {
-    if (!formData.address.trim()) {
-      toast({
-        description: "please add your address",
-        variant: "destructive",
-      });
+    try {
+      const addressSchema = signupSchema.pick({ address: true });
+      addressSchema.parse({ address: formData.address });
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          description: error.errors[0].message.toLowerCase(),
+          variant: "destructive",
+        });
+      }
       return false;
     }
-    return true;
   }, [formData.address, toast]);
 
   const nextStep = useCallback(() => setStep(prev => prev + 1), []);
 
   const handleSubmit = useCallback(async () => {
+    // Check rate limit
+    const { allowed, remainingSeconds } = checkRateLimit();
+    if (!allowed) {
+      toast({
+        description: `please wait ${remainingSeconds} seconds before trying again`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate all fields
     try {
+      const validatedData = signupSchema.parse(formData);
+      
+      setIsSubmitting(true);
+      
       const { error } = await supabase.from('signups').insert({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        instagram: formData.instagram || null,
-        address: formData.address,
-        likes: formData.likes || null,
-        listening: formData.listening || null,
-        flower: formData.flower || null,
-        colour: formData.colour || null,
-        song: formData.song || null,
-        language: formData.language || null,
-        hindi_comfort: formData.hindiUnderstanding || null,
+        name: validatedData.name,
+        email: validatedData.email,
+        phone: validatedData.phone,
+        instagram: validatedData.instagram || null,
+        address: validatedData.address,
+        likes: validatedData.likes || null,
+        listening: validatedData.listening || null,
+        flower: validatedData.flower || null,
+        colour: validatedData.colour || null,
+        song: validatedData.song || null,
+        language: validatedData.language || null,
+        hindi_comfort: validatedData.hindiUnderstanding || null,
       });
 
       if (error) throw error;
+      
+      // Record submission for rate limiting and duplicate prevention
+      recordSubmission();
+      markAsSubmitted();
+      
       nextStep();
     } catch (error) {
-      toast({
-        description: "something went wrong. please try again.",
-        variant: "destructive",
-      });
+      if (error instanceof z.ZodError) {
+        toast({
+          description: error.errors[0].message.toLowerCase(),
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          description: "something went wrong. please try again.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }, [formData, nextStep, toast]);
 
   const handleInstagramOpen = useCallback(() => {
     window.open('https://instagram.com/teendandiyan', '_blank');
   }, []);
+
+  // Already submitted screen
+  const alreadySubmittedScreen = (
+    <FormScreen key="already-submitted">
+      <div className="space-y-6">
+        <p className="text-sm breathable">
+          you've already signed up.<br />
+          i'll take it from here.
+        </p>
+      </div>
+      
+      <div className="mt-12">
+        <FormButton onClick={handleInstagramOpen}>
+          tell me you signed up ;0
+        </FormButton>
+      </div>
+    </FormScreen>
+  );
 
   const screens = useMemo(() => [
     // Screen 0: Basics
@@ -136,6 +208,7 @@ const Form = () => {
         value={formData.name}
         onChange={e => updateField('name', e.target.value)}
         onKeyDown={e => handleKeyDown(e, () => emailRef.current?.focus())}
+        maxLength={100}
       />
       <FormInput
         ref={emailRef}
@@ -144,6 +217,7 @@ const Form = () => {
         value={formData.email}
         onChange={e => updateField('email', e.target.value)}
         onKeyDown={e => handleKeyDown(e, () => phoneRef.current?.focus())}
+        maxLength={255}
       />
       <FormInput
         ref={phoneRef}
@@ -152,12 +226,14 @@ const Form = () => {
         value={formData.phone}
         onChange={e => updateField('phone', e.target.value)}
         onKeyDown={e => handleKeyDown(e, () => {})}
+        maxLength={20}
       />
       <FormInput
         placeholder="your instagram username"
         value={formData.instagram}
         onChange={e => updateField('instagram', e.target.value)}
         onKeyDown={e => handleKeyDown(e, () => validateStep0() && nextStep())}
+        maxLength={50}
       />
       
       <div className="mt-8">
@@ -178,6 +254,7 @@ const Form = () => {
         placeholder="your address"
         value={formData.address}
         onChange={e => updateField('address', e.target.value)}
+        maxLength={500}
       />
       
       <div className="mt-8">
@@ -208,26 +285,31 @@ const Form = () => {
         placeholder="films, streets, objects"
         value={formData.likes}
         onChange={e => updateField('likes', e.target.value)}
+        maxLength={200}
       />
       <FormInput
         placeholder="genres, moods, artists"
         value={formData.listening}
         onChange={e => updateField('listening', e.target.value)}
+        maxLength={200}
       />
       <FormInput
         placeholder="flowers? any flower you like."
         value={formData.flower}
         onChange={e => updateField('flower', e.target.value)}
+        maxLength={100}
       />
       <FormInput
         placeholder="colour you end up observing the most"
         value={formData.colour}
         onChange={e => updateField('colour', e.target.value)}
+        maxLength={50}
       />
       <FormInput
         placeholder="fave song(s)"
         value={formData.song}
         onChange={e => updateField('song', e.target.value)}
+        maxLength={200}
       />
       
       <div className="mt-8 flex gap-4">
@@ -319,7 +401,7 @@ const Form = () => {
     <div className="h-full overflow-hidden">
       <Header />
       <AnimatePresence mode="wait">
-        {screens[step]}
+        {step === -1 ? alreadySubmittedScreen : screens[step]}
       </AnimatePresence>
     </div>
   );
