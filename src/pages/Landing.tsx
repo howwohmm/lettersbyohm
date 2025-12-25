@@ -3,13 +3,18 @@ import { useEffect } from 'react';
 import { FormButton } from '@/components/FormButton';
 import Header from '@/components/Header';
 import { supabase } from '@/integrations/supabase/client';
+import { hasVisitBeenTracked, markVisitTracked } from '@/lib/validation';
 
 const Landing = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Track visit
-    supabase.from('visits').insert({}).then(() => {});
+    // Track visit only once per session
+    if (!hasVisitBeenTracked()) {
+      supabase.from('visits').insert({}).then(() => {
+        markVisitTracked();
+      });
+    }
   }, []);
 
   const handleStart = () => {
