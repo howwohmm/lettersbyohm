@@ -1,33 +1,21 @@
-# Letters by Ohm
+# lettersbyohm
 
-This project is built with:
+> A personal project where I write custom letters for people.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+![Status: Active](https://img.shields.io/badge/Status-Active-brightgreen)
 
-## Getting Started
+## What It Does
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+A simple web form where you can request a personalized letter from me. Tell me what you want the letter to be about, and I'll write something thoughtful for you. Tracks visits and stores submissions in Supabase.
 
-Follow these steps:
+## Tech Stack
 
-```sh
-# Step 1: Clone the repository
-git clone <YOUR_GIT_URL>
+`React` `Vite` `TypeScript` `Supabase` `shadcn/ui` `Tailwind CSS` `Framer Motion`
 
-# Step 2: Navigate to the project directory
-cd letters
+## Why I Built This
 
-# Step 3: Install the necessary dependencies
-npm i
+I've wanted to write letters for people for a long time. This gives me a structured way to collect requests and actually follow through on the idea.
 
-# Step 4: Start the development server with auto-reloading and an instant preview
-npm run dev
-```
+---
 
-## Deployment
-
-You can deploy this project to Vercel or any other hosting provider that supports Vite/React applications.
+*Built by [Om](https://github.com/howwohmm)*
